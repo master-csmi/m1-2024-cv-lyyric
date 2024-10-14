@@ -1,36 +1,35 @@
-# This is a basic workflow to help you get started with Actions
+name: Build LaTeX document
 
-name: CI
-
-# Controls when the workflow will run
+# 当发生 push 或 pull request 时触发工作流
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# 定义任务
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      # 检出代码库
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      # 安装 TeX Live (这是 LaTeX 的发行版)
+      - name: Set up TeX Live
+        uses: xu-cheng/latex-action@v2
+        with:
+          latexmk_flavor: latexmk
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+      # 编译 .tex 文件，生成 PDF
+      - name: Compile LaTeX document
+        run: latexmk -pdf main.tex
+
+      # 保存生成的 PDF 作为构建工件（Artifact）
+      - name: Upload PDF
+        uses: actions/upload-artifact@v2
+        with:
+          name: LaTeX PDF
+          path: main.pdf
