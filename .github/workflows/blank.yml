@@ -11,25 +11,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # 检出代码库
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      # 安装 TeX Live (这是 LaTeX 的发行版)
-      - name: Set up TeX Live
-        uses: xu-cheng/latex-action@v2
-        with:
-          latexmk_flavor: latexmk
-
-      # 编译 .tex 文件，生成 PDF
-      - name: Compile LaTeX document
-        run: latexmk -pdf main.tex
-
-      # 保存生成的 PDF 作为构建工件（Artifact）
-      - name: Upload PDF
-        uses: actions/upload-artifact@v2
-        with:
-          name: LaTeX PDF
-          path: main.pdf
+      - name: compile latex CV
+        uses: pdflatex main.tex
