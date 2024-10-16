@@ -1,44 +1,54 @@
-name: Build CV
+name: Build CV and Release
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
     name: Build
-    # The type of runner that the job will run on
     runs-on: self-texlive
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell to compile the LaTeX document
       - name: compile latex CV
         run: pdflatex main.tex
 
-      # Archive the generated PDF file
       - name: Archive PDF
         run: |
           mkdir -p output
           mv main.pdf output/
 
-      # Upload the PDF to a GitHub release
+      # Get the latest tag and increment version
+      - name: Increment version
+        id: version
+        run: |
+          # 获取最新的 tag，默认从 v0.0.0 开始
+          latest_tag=$(git describe --tags --abbrev=0 || echo "v0.0.0")
+          echo "Latest tag: $latest_tag"
+
+          # 解析最新的版本号
+          IFS='.' read -r -a version_parts <<< "${latest_tag//v/}"
+          major=${version_parts[0]}
+          minor=${version_parts[1]}
+          patch=${version_parts[2]}
+
+          # 递增 patch 版本号
+          new_patch=$((patch+1))
+          new_tag="v${major}.${minor}.${new_patch}"
+
+          echo "New version: $new_tag"
+          echo "::set-output name=version::$new_tag"
+
+      # Create a release and upload PDF
       - name: Upload PDF to GitHub Release
         uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.sha }} # 使用commit SHA 作为release标识
-          name: "CV Release ${{ github.sha }}"
-          files: output/main.pdf
+          tag: ${{ steps.version.outputs.version }}
+          name: "Release ${{ steps.version.outputs.version }}"
+          artifacts: output/main.pdf
