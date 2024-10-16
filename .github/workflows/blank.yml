@@ -1,5 +1,3 @@
-# This is a basic workflow to help you get started with Actions
-
 name: Build CV
 
 # Controls when the workflow will run
@@ -26,6 +24,21 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
+      # Runs a single command using the runners shell to compile the LaTeX document
       - name: compile latex CV
         run: pdflatex main.tex
+
+      # Archive the generated PDF file
+      - name: Archive PDF
+        run: |
+          mkdir -p output
+          mv main.pdf output/
+
+      # Upload the PDF to a GitHub release
+      - name: Upload PDF to GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.sha }} # 使用commit SHA 作为release标识
+          name: "CV Release ${{ github.sha }}"
+          files: output/main.pdf
